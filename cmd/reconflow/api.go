@@ -7,14 +7,14 @@ import (
   "time"
 )
 
-func json(w http.ResponseWriter, value any) { w.Header().Set("Content-Type", "application/json"); _ = json.NewEncoder(w).Encode(value) }
+func writeJSON(w http.ResponseWriter, value any) { w.Header().Set("Content-Type", "application/json"); _ = json.NewEncoder(w).Encode(value) }
 
 func projectsHandler(w http.ResponseWriter, r *http.Request) {
-  if r.Method == "POST" { json(w, map[string]any{"id":"proj_local", "name":"Default project", "createdAt":time.Now().UTC()}); return }
-  json(w, []map[string]any{{"id":"proj_local", "name":"Default project", "scope":"*.example.com", "assets":24, "validated":18}})
+  if r.Method == "POST" { writeJSON(w, map[string]any{"id":"proj_local", "name":"Default project", "createdAt":time.Now().UTC()}); return }
+  writeJSON(w, []map[string]any{{"id":"proj_local", "name":"Default project", "scope":"*.example.com", "assets":24, "validated":18}})
 }
 
 func scansHandler(w http.ResponseWriter, r *http.Request) {
   if strings.HasSuffix(r.URL.Path, "/events") { w.Header().Set("Content-Type", "text/event-stream"); w.Header().Set("Cache-Control", "no-cache"); w.Write([]byte("id: 1\nevent: metric\ndata: {\"message\":\"Live event stream connected\"}\n\n")); return }
-  json(w, map[string]any{"id":"scan_local", "status":"running", "sources":[]any{map[string]any{"name":"Subfinder","status":"running"},map[string]any{"name":"crt.sh","status":"completed"},map[string]any{"name":"Assetfinder","status":"queued"}}, "metrics":map[string]any{"candidates":128,"validated":18,"http":11,"queue":42}})
+  writeJSON(w, map[string]any{"id":"scan_local", "status":"running", "sources":[]any{map[string]any{"name":"Subfinder","status":"running"},map[string]any{"name":"crt.sh","status":"completed"},map[string]any{"name":"Assetfinder","status":"queued"}}, "metrics":map[string]any{"candidates":128,"validated":18,"http":11,"queue":42}})
 }
