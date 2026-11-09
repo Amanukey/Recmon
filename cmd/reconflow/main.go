@@ -32,6 +32,10 @@ func main() {
 			http.NotFound(w, r)
 			return
 		}
+		if r.URL.Query().Get("token") == "" {
+			http.Redirect(w, r, "/?token="+accessToken, http.StatusTemporaryRedirect)
+			return
+		}
 		data, err := webFS.ReadFile("web/index.html")
 		if err != nil {
 			http.Error(w, "dashboard unavailable", http.StatusInternalServerError)
