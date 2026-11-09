@@ -19,7 +19,7 @@ func main() {
   if _, err := rand.Read(token); err != nil { log.Fatal(err) }
   accessToken := fmt.Sprintf("%x", token)
   mux := http.NewServeMux()
-  mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { json(w, map[string]any{"status":"ok", "service":"reconflow"}) })
+  mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, map[string]any{"status":"ok", "service":"reconflow"}) })
   mux.HandleFunc("/api/projects", projectsHandler)
   mux.HandleFunc("/api/scans", scansHandler)
   mux.Handle("/", http.FileServer(http.FS(webFS)))
