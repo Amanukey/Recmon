@@ -22,7 +22,19 @@ func main() {
   mux.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, map[string]any{"status":"ok", "service":"reconflow"}) })
   mux.HandleFunc("/api/projects", projectsHandler)
   mux.HandleFunc("/api/scans", scansHandler)
-  mux.Handle("/", http.FileServer(http.FS(webFS)))
+  mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+    if r.URL.Path != "/" {
+      http.NotFound(w, r)
+      return
+    }
+    data, err := webFS.ReadFile("web/index.html")
+    if err != nil {
+      http.Error(w, "dashboard unavailable", http.StatusInternalServerError)
+      return
+    }
+    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+    _, _ = w.Write(data)
+  })
 
   listener, err := net.Listen("tcp", "127.0.0.1:0")
   if err != nil { log.Fatal(err) }
