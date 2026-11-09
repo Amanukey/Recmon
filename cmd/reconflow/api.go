@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -27,7 +28,14 @@ func scansHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		writeJSON(w, map[string]any{"id": "scan_local", "status": "running", "startedAt": time.Now().UTC()})
+		startedAt := time.Now().UTC()
+		scanID := "scan_" + strconv.FormatInt(startedAt.UnixNano(), 10)
+		writeJSON(w, map[string]any{"id": scanID, "status": "running", "startedAt": startedAt})
+		return
+	}
+
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -45,8 +53,9 @@ func streamScanEvents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for sequence := 1; sequence <= 5; sequence++ {
-		payload, _ := json.Marshal(map[string]any{"message": "Live update " + string(rune('0'+sequence)) + " received", "sequence": sequence})
-		_, _ = w.Write([]byte("id: " + string(rune('0'+sequence)) + "\nevent: metric\ndata: " + string(payload) + "\n\n"))
+		sequenceText := strconv.Itoa(sequence)
+		payload, _ := json.Marshal(map[string]any{"message": "Live update " + sequenceText + " received", "sequence": sequence})
+		_, _ = w.Write([]byte("id: " + sequenceText + "\nevent: metric\ndata: " + string(payload) + "\n\n"))
 		flusher.Flush()
 		select {
 		case <-time.After(2 * time.Second):
