@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"reconflow/internal/engine"
+	"reconflow/internal/scope"
+	"reconflow/internal/storage"
 )
 
 func writeJSON(w http.ResponseWriter, value any) {
@@ -40,6 +45,34 @@ func scansHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, map[string]any{"id": "scan_local", "status": "running", "sources": []any{map[string]any{"name": "Subfinder", "status": "running"}, map[string]any{"name": "crt.sh", "status": "completed"}, map[string]any{"name": "Assetfinder", "status": "queued"}}, "metrics": map[string]any{"candidates": 128, "validated": 18, "http": 11, "queue": 42}})
+}
+
+func engineRunHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	var request struct {
+		ProjectID  string       `json:"projectId"`
+		Candidates []string     `json:"candidates"`
+		Scope      []scope.Rule `json:"scope"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil || request.ProjectID == "" {
+		http.Error(w, "projectId and candidates are required", http.StatusBadRequest)
+		return
+	}
+	store, err := storage.Open(":memory:")
+	if err != nil {
+		http.Error(w, "storage unavailable", http.StatusInternalServerError)
+		return
+	}
+	defer store.Close()
+	results, err := (&engine.Engine{Store: store, ProjectID: request.ProjectID, Scope: scope.New(request.Scope)}).Run(context.Background(), request.Candidates)
+	if err != nil {
+		http.Error(w, "engine run failed", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, map[string]any{"results": results, "count": len(results)})
 }
 
 func streamScanEvents(w http.ResponseWriter, r *http.Request) {

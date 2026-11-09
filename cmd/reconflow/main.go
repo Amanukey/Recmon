@@ -27,6 +27,7 @@ func main() {
 	mux.HandleFunc("/api/projects", projectsHandler)
 	mux.HandleFunc("/api/scans", scansHandler)
 	mux.HandleFunc("/api/scans/", scansHandler)
+	mux.HandleFunc("/api/engine/run", engineRunHandler)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
